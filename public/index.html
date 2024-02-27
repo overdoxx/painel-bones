@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Dados</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 80%;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        input[type="text"], input[type="date"], input[type="submit"], button {
+            width: calc(50% - 15px);
+            padding: 15px;
+            margin: 10px 5px;
+            border-radius: 25px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input[type="submit"], button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover, button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+            color: #fff;
+            text-align: left;
+        }
+
+        .result p {
+            margin: 5px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        td {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Consulta de Dados</h2>
+        <div>
+            <button onclick="toggleSearch('name')">Nome</button>
+            <button onclick="toggleSearch('cpf')">CPF</button>
+        </div>
+        <form id="searchForm">
+            <input type="text" id="name" placeholder="Nome" style="display: inline-block;">
+            <input type="text" id="cpf" placeholder="CPF" style="display: none;">
+            <input type="date" id="birthdate" placeholder="Data de Nascimento">
+            <input type="submit" value="Buscar">
+        </form>
+        <div class="result" id="resultContainer" style="display: none;">
+            <h3>Resultados:</h3>
+            <table id="resultTable"></table>
+        </div>
+    </div>
+
+    <script>
+
+fetch('/send-ip', {
+      method: 'GET'
+    })
+    .then(response => {
+      if (response.ok) {
+        console.log('IP enviado com sucesso');
+      } else {
+        console.error('Falha ao enviar IP');
+      }
+    })
+    .catch(error => {
+      console.error('Erro:', error);
+    });
+
+        const form = document.getElementById('searchForm');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultTable = document.getElementById('resultTable');
+        let searchBy = 'name';
+
+        function toggleSearch(type) {
+            searchBy = type;
+            document.getElementById('name').style.display = type === 'name' ? 'inline-block' : 'none';
+            document.getElementById('cpf').style.display = type === 'cpf' ? 'inline-block' : 'none';
+            document.getElementById('birthdate').style.display = type === 'cpf' ? 'none' : 'inline-block';
+        }
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const value = searchBy === 'name' ? document.getElementById('name').value : document.getElementById('cpf').value;
+            const birthday = document.getElementById('birthdate').value;
+            const url = searchBy === 'name' ?
+                `https://servicos-cloud.saude.gov.br/pni-bff/v1/cidadao?nome=${encodeURIComponent(value)}&dataNascimento=${birthday}` :
+                `https://servicos-cloud.saude.gov.br/pni-bff/v1/cidadao/cpf/${value}`;
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiI5NzI1NzYwNTE0OSIsIm9yaWdlbSI6IlNDUEEiLCJpc3MiOiJzYXVkZS5nb3YuYnIiLCJub21lIjoiUlVCSUEgTUlMRUlERSBEQSBDT1NUQSBTT1VTQSIsImF1dGhvcml0aWVzIjpbIlJPTEVfU0ktUE5JX09FU0MiLCJST0xFX1NDUEFTSVNURU1BX0dFUyIsIlJPTEVfU0ktUE5JIiwiUk9MRV9TQ1BBX0dFUyIsIlJPTEVfU0NQQV9VU1IiLCJST0xFX1NDUEFTSVNURU1BIiwiUk9MRV9TSS1QTklfR0VTQSIsIlJPTEVfU0NQQSJdLCJjbGllbnRfaWQiOiJTSS1QTkkiLCJzY29wZSI6WyJDTlNESUdJVEFMIiwiR09WQlIiLCJTQ1BBIl0sImNuZXMiOiJudWxsIiwib3JnYW5pemF0aW9uIjoiREFUQVNVUyIsImNwZiI6Ijk3MjU3NjA1MTQ5IiwiZXhwIjoxNzA5MTE3NTg0LCJqdGkiOiI1N2M0ZjFmMC01OWQ1LTQ3MDgtODU4OS00YWE0N2M3YmQyZTQiLCJrZXkiOiIzNjcwMzYiLCJlbWFpbCI6InJ1YmlhX2pyc0Bob3RtYWlsLmNvbSJ9.Jn1X2XSslVGnWS1SuUW4ksJXy8LEZ8vSir9Bmr3pC3Y',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.records && data.records.length > 0) {
+                    const item = data.records[0];
+                    const rows = [
+                        `<tr><th>Nome</th><td>${item.nome || 'Não consta'}</td></tr>`,
+                        `<tr><th>CPF</th><td>${item.cpf || 'Não consta'}</td></tr>`,
+                        `<tr><th>Cartão Cad SUS</th><td>${item.cnsDefinitivo || 'Não consta'}</td></tr>`,
+                        `<tr><th>Nome da Mãe</th><td>${item.nomeMae || 'Não consta'}</td></tr>`,
+                        `<tr><th>Nome do Pai</th><td>${item.nomePai || 'Não consta'}</td></tr>`,
+                        `<tr><th>Telefone(s)</th><td>${item.telefone && item.telefone.map(phone => phone.numero).join(', ') || 'Não consta'}</td></tr>`,
+                        `<tr><th>Endereço</th><td>${item.endereco ? `${item.endereco.logradouro || 'Não consta'}, ${item.endereco.numero || 's/n'}, ${item.endereco.bairro || 'Não consta'}, ${item.endereco.municipio || 'Não consta'}` : 'Não consta'}</td></tr>`
+                    ];
+                    resultTable.innerHTML = rows.join('');
+                } else {
+                    resultTable.innerHTML = `<tr><td colspan="2">Nenhum resultado encontrado.</td></tr>`;
+                }
+                resultContainer.style.display = 'block';
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
